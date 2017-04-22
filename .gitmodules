@@ -1,0 +1,3 @@
+[submodule "BAT-prototyping"]
+	path = BAT-prototyping
+	url = https://github.com/dapphub/BAT-prototyping
