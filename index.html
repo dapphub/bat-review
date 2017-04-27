@@ -30,27 +30,43 @@ CRITICAL/BLOCKING ISSUES
 All ether in this contract is lost if `totalSupply < tokenCreationMin && now > fundingEndBlock`.
 
 Proof:
+
 1) The only ways to get Ether out of this contract are `finalize` and `refund`.
+
 2) `refund` will throw if `isFunding` is true.
+
 3) The only way `isFunding` can be set to `false` is if `finalize` is not reverted.
+
 4) `finalize` will throw when `totalSupply < tokenCreationMin`.
+
 5) `totalSupply` cannot be increased after `fundingEndBlock`.
 
 
 ### Control address must have empty payable fallback or empty code or else all funds could be lost
 
-It appears that the control address has only been tested with "normal" accounts; the developers must explicitly
+
+
+It appears that the control address has only been tested with "key" accounts; the developers must explicitly
 take care to deploy this from a key and not from any deployment utility or control contracts (e.g. a multisig)
 without a throwing fallback function or one that uses more than default `.send` gas, which is only enough for one event log.
 
 It appears that the devs do intend to use a plain key, but an explicit acknowledgement of this danger from the developers would be comforting.
 
-Better yet, it is recommneded to simply switch to `.call.value()`-based transfers.
+Better yet, it is recommneded to simply switch to `.call.value()`-based transfers (see rewrite section and `ds-exec`).
 
 ### Harmful special cases in StandardToken that could result in stuck funds
 
 `StandardToken` includes deceptively harmful special cases which can lead to funds getting stuck if consumer contracts don't take
 care to work around them. Treating 0-value transfer and approvals as valid makes for far cleaner token semantics.
+
+This is an example contract that might seem correct at first glance, but could actually freeze funds inside a contract:
+
+```
+uint _withdrawFee = 0;
+function withdraw() {
+    BAT.transfer(msg.sender, withdrawFee);
+}
+```
 
 ### Several minor changes since review commit
 
