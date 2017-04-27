@@ -1,3 +1,6 @@
 [submodule "BAT-prototyping"]
 	path = BAT-prototyping
 	url = https://github.com/dapphub/BAT-prototyping
+[submodule "bat-rewrite"]
+	path = bat-rewrite
+	url = https://github.com/dapphub/bat-rewrite
