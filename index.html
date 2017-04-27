@@ -1,0 +1,106 @@
+<!doctype html>
+<meta charset=utf-8>
+<meta name=viewport content=width=device-width>
+<link rel=stylesheet href=index.css>
+<script id=content type=markdown>
+
+# BAT Review
+
+#### Nikolai Mushegian, DappHub
+
+DISCLAIMER/SCOPE
+---
+
+This document is our best attempt to review the Solidity source code at commit [04866d03](https://github.com/brave/BAT-prototyping/tree/04866d03cb42790287d8c38f3d4a334277527924/contracts). This is not a review of any smart contracts that have been deployed to the Ethereum blockchain.
+
+It is important to note that no system is safe until proper verification tools exist. Solidity compiler errors are still common, and it is also not yet feasible to verify that the compiler or emitted code are correct.
+
+### List of Files
+
+    Migrations.sol
+    SafeMath.sol
+    StandardToken.sol
+    testBAToken.sol
+
+CRITICAL/BLOCKING ISSUES
+---
+
+### Failing to raise at least `tokenCreationMin` worth of ETH causes loss of all funds.
+
+All ether in this contract is lost if `totalSupply < tokenCreationMin && now > fundingEndBlock`.
+
+Proof:
+1) The only ways to get Ether out of this contract are `finalize` and `refund`.
+2) `refund` will throw if `isFunding` is true.
+3) The only way `isFunding` can be set to `false` is if `finalize` is not reverted.
+4) `finalize` will throw when `totalSupply < tokenCreationMin`.
+5) `totalSupply` cannot be increased after `fundingEndBlock`.
+
+
+### Control address must have empty payable fallback or empty code or else all funds could be lost
+
+It appears that the control address has only been tested with "normal" accounts; the developers must explicitly
+take care to deploy this from a key and not from any deployment utility or control contracts (e.g. a multisig)
+without a throwing fallback function or one that uses more than default `.send` gas, which is only enough for one event log.
+
+It appears that the devs do intend to use a plain key, but an explicit acknowledgement of this danger from the developers would be comforting.
+
+Better yet, it is recommneded to simply switch to `.call.value()`-based transfers.
+
+### Harmful special cases in StandardToken that could result in stuck funds
+
+`StandardToken` includes deceptively harmful special cases which can lead to funds getting stuck if consumer contracts don't take
+care to work around them. Treating 0-value transfer and approvals as valid makes for far cleaner token semantics.
+
+### Several minor changes since review commit
+
+There were several commits added to the source repository after a review tag was identified. The changes look fine,
+but are technically out of scope. In any case there will need to be a follow-up of some kind to address the blocking issues.
+
+MINOR ISSUES AND SUGGESTIONS
+---
+
+### `finalize` state transition could be defined implicitly, avoiding need for admin transaction
+
+All information necessary to virtualize the `finalize` state transition is available at all times,
+as it only uses timestamps and local storage variables.
+
+### Funding start/end should probably use timestamps, not blocks.
+
+Expected blocktime-time error increases proportionally to length of crowdsale.
+
+### Intent could be clarified with better names
+
+Two examples are `attnTokenControl` or `tmp`.
+
+### Manual token accounting and overloading Transfer event
+
+There is duplicated accounting logic for creating/destroying tokens and signaling this with an event; suggest studying `mint`/`burn`
+functions in sample rewrite and adopting similar patterns.
+
+### Inconsistent use of modifiers vs explicit assertions
+
+Readability would be improved if there were more consistency in choice of modifier-based preconditions vs explicit assertions.
+
+### Token ratio is arbitrary, and the only justification provided holds no water
+
+It's strange not to use 1:1 just to get 5 more figures of effective precision when in 18 decimals seems to be more than enough.
+If an initial price of 1:1 is used the impact of the inflation for the developers is easier to understand as well.
+
+### Custodian/developer fund allocation strategy could use justification
+
+The allocation strategy for the custodian/development fund does not appear to be engineered to achieve any specific incentives.
+It would be good to justify the particular constants chosen for the limits, as well as for the distribution strategy as a whole.
+
+SAMPLE REWRITE
+---
+
+ds-auth
+ds-token
+ds-math
+
+https://github.com/dapphub/bat-rewrite
+
+</script>
+<script src=showdown.min.js></script>
+<script>document.write(new showdown.Converter().makeHtml(content.innerHTML))</script>
