@@ -70,7 +70,7 @@ function lowerReward(uint what) auth {
     _reward = what;
 }
 function claimReward() {
-    BAT.transfer(msg.sender, withdrawFee);
+    BAT.transfer(msg.sender, _reward);
 }
 ```
 
@@ -136,7 +136,7 @@ Readability would be improved if there were more consistency in choice of modifi
 E.G:
 
 ```
-    function finalize()
+    function refund()
       public
       onlyWhenFunding
     {
@@ -151,10 +151,10 @@ vs
       if(!isFunding) throw;
 ```
 
-### Token ratio is arbitrary, and the only justification provided holds no water
+### Token ratio is arbitrary
 
-It's strange not to use 1:1 just to get 5 more figures of effective precision when in 18 decimals seems to be more than enough.
-If an initial price of 1:1 is used the impact of the inflation for the developers is easier to understand as well.
+It's strange not to use a 1:1 ratio of BAT to ETH just to get 5 more figures of effective precision when 18 decimals seems to be more than enough.
+If an initial price of 1:1 is used, the impact of the inflation for the developers is easier to understand as well.
 
 ### Custodian/developer fund allocation strategy could use justification
 
