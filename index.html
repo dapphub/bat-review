@@ -25,7 +25,7 @@ It is important to note that no system is safe until proper verification tools e
 CRITICAL/BLOCKING ISSUES
 ---
 
-### Control address must have very low gas cost to call or else all funds could be lost.
+### Control address must not revert on call or else all funds could be lost.
 
 ```
 if(!attnTokenControl.send(this.balance)) throw;  // send the eth home
@@ -39,7 +39,7 @@ It appears that the devs do intend to use a plain key, but an explicit acknowled
 
 Better yet, it is recommneded to simply switch to `.call.value()`-based transfers (see rewrite section and `ds-exec`).
 
-### User addresses must have very low gas cost to call or else their funds could be lost.
+### User addresses must not revert on call or else their funds could be lost.
 
 The same issue exists for user addresses used to call `createToken/refund`.
 
