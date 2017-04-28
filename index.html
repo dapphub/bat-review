@@ -4,14 +4,14 @@
 <link rel=stylesheet href=index.css>
 <script id=content type=markdown>
 
-# BAT Review
+# Brave Access Token/Crowdsale Code Review
 
 #### Nikolai Mushegian, DappHub
 
 DISCLAIMER/SCOPE
 ---
 
-This document is our best attempt to review the Solidity source code at commit [04866d03](https://github.com/brave/BAT-prototyping/tree/04866d03cb42790287d8c38f3d4a334277527924/contracts). This is not a review of any smart contracts that have been deployed to the Ethereum blockchain.
+This document is our best attempt to review the Solidity source code at commit [04866d03](https://github.com/brave/BAT-prototyping/tree/04866d03cb42790287d8c38f3d4a334277527924/contracts). This is not a verification of any objects that have been deployed to the Ethereum blockchain.
 
 It is important to note that no system is safe until proper verification tools exist. Solidity compiler errors are still common, and it is also not yet feasible to verify that the compiler or emitted code are correct.
 
@@ -25,26 +25,26 @@ It is important to note that no system is safe until proper verification tools e
 CRITICAL/BLOCKING ISSUES
 ---
 
-### Failing to raise at least `tokenCreationMin` worth of ETH causes loss of all funds.
+### Failing to raise at least `tokenCreationMin` worth of ETH causes loss of all funds (up to 
 
 All ether in this contract is lost if `totalSupply < tokenCreationMin && now > fundingEndBlock`.
 
 Proof:
 
-1) The only ways to get Ether out of this contract are `finalize` and `refund`.
+1. The only ways to get Ether out of this contract are `finalize` and `refund`.
 
-2) `refund` will throw if `isFunding` is true.
+2. `refund` will throw if `isFunding` is true.
 
-3) The only way `isFunding` can be set to `false` is if `finalize` is not reverted.
+3. The only way `isFunding` can be set to `false` is if `finalize` is not reverted.
 
-4) `finalize` will throw when `totalSupply < tokenCreationMin`.
+4. `finalize` will throw when `totalSupply < tokenCreationMin`.
 
-5) `totalSupply` cannot be increased after `fundingEndBlock`.
+5. `totalSupply` cannot be increased after `fundingEndBlock`.
 
 
 ### Control address must have empty payable fallback or empty code or else all funds could be lost
 
-
+`if(!attnTokenControl.send(this.balance)) throw;  // send the eth home`
 
 It appears that the control address has only been tested with "key" accounts; the developers must explicitly
 take care to deploy this from a key and not from any deployment utility or control contracts (e.g. a multisig)
@@ -57,13 +57,21 @@ Better yet, it is recommneded to simply switch to `.call.value()`-based transfer
 ### Harmful special cases in StandardToken that could result in stuck funds
 
 `StandardToken` includes deceptively harmful special cases which can lead to funds getting stuck if consumer contracts don't take
-care to work around them. Treating 0-value transfer and approvals as valid makes for far cleaner token semantics.
+care to work around them.
 
-This is an example contract that might seem correct at first glance, but could actually freeze funds inside a contract:
+Treating 0-value transfer and approvals as valid makes for far cleaner token semantics - adding throw on 0 is an anti-pattern.
+
+This is an example code snippet of a contract using BAT for some incentive, which might seem correct at first glance,
+but could actually freeze funds inside contract:
 
 ```
-uint _withdrawFee = 0;
-function withdraw() {
+uint _reward = 1000;
+// suppose the authority can lower the reward
+function lowerReward(uint what) auth {
+    assert( what < _reward );
+    _reward = what;
+}
+function claimReward() {
     BAT.transfer(msg.sender, withdrawFee);
 }
 ```
@@ -80,6 +88,14 @@ MINOR ISSUES AND SUGGESTIONS
 
 All information necessary to virtualize the `finalize` state transition is available at all times,
 as it only uses timestamps and local storage variables.
+
+### Treating 0-value messages as special cases is usually an anti-pattern.
+
+This is related to the blocking issue above, though is far less likely to case problems:
+
+`if (msg.value == 0) throw;`
+
+If this line is deleted, the entire action behaves the same way.
 
 ### Funding start/end should probably use timestamps, not blocks.
 
@@ -112,7 +128,9 @@ SAMPLE REWRITE
 ---
 
 ds-auth
+
 ds-token
+
 ds-math
 
 https://github.com/dapphub/bat-rewrite
