@@ -70,6 +70,7 @@ function lowerReward(uint what) auth {
     _reward = what;
 }
 function claimReward() {
+    BAT.transfer(recipient, amount); // some unrelated operation pulling out tokens
     BAT.transfer(msg.sender, _reward);
 }
 ```
