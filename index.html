@@ -25,14 +25,6 @@ It is important to note that no system is safe until proper verification tools e
 CRITICAL/BLOCKING ISSUES
 ---
 
-### User addresses must have very low gas cost to call or else their funds could be lost.
-
-```
-if (!msg.sender.send(ethVal)) throw;
-```
-
-We suggest `.call.value()`-based transfers (see rewrite section and `ds-exec`).
-
 ### Control address must have very low gas cost to call or else all funds could be lost.
 
 ```
@@ -46,6 +38,19 @@ without a throwing fallback function or one that uses more than default `.send` 
 It appears that the devs do intend to use a plain key, but an explicit acknowledgement of this danger from the developers would be comforting.
 
 Better yet, it is recommneded to simply switch to `.call.value()`-based transfers (see rewrite section and `ds-exec`).
+
+### User addresses must have very low gas cost to call or else their funds could be lost.
+
+The same issue exists for user addresses used to call `createToken/refund`.
+
+```
+if (!msg.sender.send(ethVal)) throw;
+```
+
+There is no mention that the developers know that they must provide warnings not to interact with this object from certain contracts.
+
+We suggest switching to `.call.value()`-based transfers (see rewrite section and `ds-exec`).
+
 
 ### Harmful special cases in StandardToken that could result in stuck funds
 
