@@ -25,7 +25,7 @@ It is important to note that no system is safe until proper verification tools e
 CRITICAL/BLOCKING ISSUES
 ---
 
-### Failing to raise at least `tokenCreationMin` worth of ETH causes loss of all funds (up to 
+### Failing to raise at least `tokenCreationMin` worth of ETH causes loss of all funds.
 
 All ether in this contract is lost if `totalSupply < tokenCreationMin && now > fundingEndBlock`.
 
@@ -33,7 +33,7 @@ Proof:
 
 1. The only ways to get Ether out of this contract are `finalize` and `refund`.
 
-2. `refund` will throw if `isFunding` is true.
+2. `refund` will throw if `isFunding` is false.
 
 3. The only way `isFunding` can be set to `false` is if `finalize` is not reverted.
 
@@ -41,10 +41,19 @@ Proof:
 
 5. `totalSupply` cannot be increased after `fundingEndBlock`.
 
+### User addresses must have very low gas cost to call or else their funds could be lost.
 
-### Control address must have empty payable fallback or empty code or else all funds could be lost
+```
+if (!msg.sender.send(ethVal)) throw;
+```
 
-`if(!attnTokenControl.send(this.balance)) throw;  // send the eth home`
+We suggest `.call.value()`-based transfers (see rewrite section and `ds-exec`).
+
+### Control address must have very low gas cost to call or else all funds could be lost.
+
+```
+if(!attnTokenControl.send(this.balance)) throw;  // send the eth home
+```
 
 It appears that the control address has only been tested with "key" accounts; the developers must explicitly
 take care to deploy this from a key and not from any deployment utility or control contracts (e.g. a multisig)
