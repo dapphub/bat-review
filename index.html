@@ -105,7 +105,9 @@ as it only uses timestamps and local storage variables.
 
 This is related to the blocking issue above, though is far less likely to case problems:
 
-`if (msg.value == 0) throw;`
+```
+if (msg.value == 0) throw;
+```
 
 If this line is deleted, the entire action behaves the same way.
 
