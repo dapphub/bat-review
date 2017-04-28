@@ -25,22 +25,6 @@ It is important to note that no system is safe until proper verification tools e
 CRITICAL/BLOCKING ISSUES
 ---
 
-### Failing to raise at least `tokenCreationMin` worth of ETH causes loss of all funds.
-
-All ether in this contract is lost if `totalSupply < tokenCreationMin && now > fundingEndBlock`.
-
-Proof:
-
-1. The only ways to get Ether out of this contract are `finalize` and `refund`.
-
-2. `refund` will throw if `isFunding` is false.
-
-3. The only way `isFunding` can be set to `false` is if `finalize` is not reverted.
-
-4. `finalize` will throw when `totalSupply < tokenCreationMin`.
-
-5. `totalSupply` cannot be increased after `fundingEndBlock`.
-
 ### User addresses must have very low gas cost to call or else their funds could be lost.
 
 ```
@@ -92,6 +76,25 @@ but are technically out of scope. In any case there will need to be a follow-up 
 
 MINOR ISSUES AND SUGGESTIONS
 ---
+
+### Assertions and preconditions could be significantly clearer.
+
+E.G.:
+```
+      if ((block.number <= fundingEndBlock ||
+           totalSupply < tokenCreationMin) &&
+          totalSupply < tokenCreationCap) throw;
+```
+
+vs
+
+```
+var done = block.number <= fundingEndBlock;
+var enough = totalSupply >= tokenCreationMin;
+assert( done && enough ); 
+```
+
+(One condition eliminated completly as it is necessarily true due to `createToken` logic)
 
 ### `finalize` state transition could be defined implicitly, avoiding need for admin transaction
 
