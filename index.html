@@ -123,6 +123,24 @@ functions in sample rewrite and adopting similar patterns.
 
 Readability would be improved if there were more consistency in choice of modifier-based preconditions vs explicit assertions.
 
+E.G:
+
+```
+    function finalize()
+      public
+      onlyWhenFunding
+    {
+```
+
+vs
+
+```
+    function refund()
+      public
+    {
+      if(!isFunding) throw;
+```
+
 ### Token ratio is arbitrary, and the only justification provided holds no water
 
 It's strange not to use 1:1 just to get 5 more figures of effective precision when in 18 decimals seems to be more than enough.
