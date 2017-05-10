@@ -22,42 +22,15 @@ It is important to note that no system is safe until proper verification tools e
     StandardToken.sol
     testBAToken.sol
 
-CRITICAL/BLOCKING ISSUES
+MAJOR ISSUES
 ---
-
-### Control address must not revert on call or else all funds could be lost.
-
-```
-if(!attnTokenControl.send(this.balance)) throw;  // send the eth home
-```
-
-It appears that the control address has only been tested with "key" accounts; the developers must explicitly
-take care to deploy this from a key and not from any deployment utility or control contracts (e.g. a multisig)
-without a throwing fallback function or one that uses more than default `.send` gas, which is only enough for one event log.
-
-It appears that the devs do intend to use a plain key, but an explicit acknowledgement of this danger from the developers would be comforting.
-
-Better yet, it is recommneded to simply switch to `.call.value()`-based transfers (see rewrite section and `ds-exec`).
-
-### User addresses must not revert on call or else their funds could be lost.
-
-The same issue exists for user addresses used to call `createToken/refund`.
-
-```
-if (!msg.sender.send(ethVal)) throw;
-```
-
-There is no mention that the developers know that they must provide warnings not to interact with this object from certain contracts.
-
-We suggest switching to `.call.value()`-based transfers (see rewrite section and `ds-exec`).
-
 
 ### Harmful special cases in StandardToken that could result in stuck funds
 
 `StandardToken` includes deceptively harmful special cases which can lead to funds getting stuck if consumer contracts don't take
 care to work around them.
 
-Treating 0-value transfer and approvals as valid makes for far cleaner token semantics - adding throw on 0 is an anti-pattern.
+Treating 0-value transfer and approvals as valid makes for far cleaner token semantics - returning false on 0 is an anti-pattern.
 
 This is an example code snippet of a contract using BAT for some incentive, which might seem correct at first glance,
 but could actually freeze funds inside contract:
@@ -70,8 +43,7 @@ function lowerReward(uint what) auth {
     _reward = what;
 }
 function claimReward() {
-    BAT.transfer(recipient, amount); // some unrelated operation pulling out tokens
-    BAT.transfer(msg.sender, _reward);
+    assert( BAT.transfer(recipient, amount) && BAT.transfer(msg.sender, _reward) );
 }
 ```
 
@@ -116,6 +88,32 @@ if (msg.value == 0) throw;
 ```
 
 If this line is deleted, the entire action behaves the same way.
+
+### Control address must not revert on call or else all funds could be lost.
+
+```
+if(!attnTokenControl.send(this.balance)) throw;  // send the eth home
+```
+
+The developers must explicitly take care to deploy this from a key and not from any deployment utility or control contracts (e.g. a multisig)
+without a throwing fallback function or one that uses more than default `.send` gas, which is only enough for one event log.
+
+It appears that the devs do intend to use a plain key, but an explicit acknowledgement of this danger from the developers would be comforting.
+
+Better yet, it is recommneded to simply switch to `.call.value()`-based transfers (see rewrite section and `ds-exec`).
+
+### User addresses must not revert on call or else their funds could be lost.
+
+The same issue exists for user addresses used to call `createToken/refund`.
+
+```
+if (!msg.sender.send(ethVal)) throw;
+```
+
+There is no mention that the developers know that they must provide warnings not to interact with this object from certain contracts. This is a
+theoretical edge case that is not likely to cause problems, and this falls into the long tail of ways it's possible for a user to trap their own tokens.
+
+We suggest switching to `.call.value()`-based transfers (see rewrite section and `ds-exec`).
 
 ### Funding start/end should probably use timestamps, not blocks.
 
