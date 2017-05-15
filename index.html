@@ -98,25 +98,41 @@ If this line is deleted, the entire action behaves the same way.
 if(!attnTokenControl.send(this.balance)) throw;  // send the eth home
 ```
 
-The developers must explicitly take care to deploy this from a key and not from any deployment utility or control contracts (e.g. a multisig)
-without a throwing fallback function or one that uses more than default `.send` gas, which is only enough for one event log.
+The developers must explicitly take care to not to deploy this from any utility or control contracts (e.g. a multisig)
+with a throwing fallback function or one that uses more than default `.send` gas, which is only enough for one event log.
 
-It appears that the devs do intend to use a plain key, but an explicit acknowledgement of this danger from the developers would be comforting.
+The developers do indeed plan to use a standard multisig contract which will not have any problems. The danger here is
+only related to transferring control to a contract that uses more than 21000 gas in the fallback. All examples feel contrived
+and unlikely to happen in the wild, but are worth noting with so much money at stake.
 
-Better yet, it is recommneded to simply switch to `.call.value()`-based transfers (see rewrite section and `ds-exec`).
+```
+contract BadWallet {
+    // ... multisig features
+    function() {
+        // While this seems pointless, it also doesn't seem obviously dangerous.
+        _calls++;
+        _callers[_calls] = msg.sender;
+    }
+}
+```
+
+
+We recommneded to simply switch to `.call.value()`-based transfers (see rewrite section and `ds-exec`).
 
 ### User addresses must not revert on call or else their funds could be lost.
-
-The same issue exists for user addresses used to call `createToken/refund`.
 
 ```
 if (!msg.sender.send(ethVal)) throw;
 ```
 
-There is no mention that the developers know that they must provide warnings not to interact with this object from certain contracts. This is a
-theoretical edge case that is not likely to cause problems, and this falls into the long tail of ways it's possible for a user to trap their own tokens.
+The same issue exists for user addresses used to call `createToken/refund`. This is slightly more concerning than the previous issue
+because the developers have no control over how users choose to interact with their contract.
 
-We suggest switching to `.call.value()`-based transfers (see rewrite section and `ds-exec`).
+This is a theoretical edge case that is not likely to cause problems, and this falls into the long tail of ways it's possible for a user to trap their own tokens.
+
+One suggestion is that the developers explicitly warn users to only use the most common multisig contracts.
+
+Better yet, we suggest switching to `.call.value()`-based transfers (see rewrite section and `ds-exec`).
 
 ### Funding start/end should probably use timestamps, not blocks.
 
