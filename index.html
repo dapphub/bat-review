@@ -11,7 +11,7 @@
 DISCLAIMER/SCOPE
 ---
 
-This document is our best attempt to review the Solidity source code at commit [04866d03](https://github.com/brave/BAT-prototyping/tree/04866d03cb42790287d8c38f3d4a334277527924/contracts). This is not a verification of any objects that have been deployed to the Ethereum blockchain.
+This document is our best attempt to review the Solidity source code at commit [04866d03](https://github.com/brave/BAT-prototyping/tree/04866d03cb42790287d8c38f3d4a334277527924/contracts) of the private BAT prototype crowdsale repository. This is not a verification of any objects that have been deployed to the Ethereum blockchain.
 
 It is important to note that no system is safe until proper verification tools exist. Solidity compiler errors are still common, and it is also not yet feasible to verify that the compiler or emitted code are correct.
 
@@ -21,6 +21,11 @@ It is important to note that no system is safe until proper verification tools e
     SafeMath.sol
     StandardToken.sol
     testBAToken.sol
+
+CRITICAL BLOCKING ISSUES
+------------------------
+
+We found no critical blocking issues in the repository.
 
 MAJOR ISSUES
 ---
@@ -53,7 +58,7 @@ to change the default behavior of StandardToken. The issue is being discussed in
 ### Several minor changes since review commit
 
 There were several commits added to the source repository after a review tag was identified. The changes look fine,
-but are technically out of scope. In any case there will need to be a follow-up of some kind to address the blocking issues.
+but are technically out of scope. We've noted in this document where our suggested changes appeart to have been implemented in the finalized BAT [crowdsale repository](https://github.com/brave-intl/basic-attention-token-crowdsale/).
 
 MINOR ISSUES AND SUGGESTIONS
 ---
@@ -76,6 +81,8 @@ assert( done && enough );
 ```
 
 (One condition eliminated completly as it is necessarily true due to `createToken` logic)
+
+**Update 05/23/17:** The assertions in the finalized repo appear to have been split up and the legibility improved.
 
 ### `finalize` state transition could be defined implicitly, avoiding need for admin transaction
 
@@ -142,6 +149,8 @@ Expected blocktime-time error increases proportionally to length of crowdsale.
 
 Two examples are `attnTokenControl` or `tmp`.
 
+**Update 05/23/17:** The variable names in the finalized repo appear to have been renamed and the legibility improved.
+
 ### Manual token accounting and overloading Transfer event
 
 There is duplicated accounting logic for creating/destroying tokens and signaling this with an event; we suggest studying `mint`/`burn`
@@ -169,6 +178,8 @@ vs
       if(!isFunding) throw;
 ```
 
+**Update 05/23/17:** The use of all modifiers in the finalized repo appears to have been removed.
+
 ### Token ratio is arbitrary
 
 It's strange not to use a 1:1 ratio of BAT to ETH just to get 5 more figures of effective precision when 18 decimals seems to be more than enough.
@@ -183,7 +194,7 @@ SAMPLE REWRITE
 ---
 
 ```
-// (C) 2016 DappHub, LLC
+// (C) 2017 DappHub, LLC
 
 pragma solidity ^0.4.8;
 
