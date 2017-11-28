@@ -269,4 +269,4 @@ Note that this code has no tests, is not a drop-in equivalent to the BAT sale/to
 
 </script>
 <script src=showdown.min.js></script>
-<script>document.write(new showdown.Converter().makeHtml(content.innerHTML))</script>
+<script>document.write(new showdown.Converter().makeHtml(document.getElementById("content").innerHTML))</script>
